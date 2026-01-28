@@ -1,0 +1,18 @@
+{
+  "name": "catalyzer",
+  "version": "1.0.0",
+  "description": "The Catalyzer - Pazuzu Detection System for Cats",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "multer": "^1.4.5-lts.1",
+    "sharp": "^0.33.2",
+    "@google/generative-ai": "^0.21.0",
+    "dotenv": "^16.3.1"
+  }
+}
