@@ -105,8 +105,11 @@ app.post('/analyze', upload.single('image'), async (req, res) => {
         // Convert to base64
         const base64Image = resizedBuffer.toString('base64');
 
-        // Call Gemini
-        const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+        // Call Gemini - using Flash-Lite for better free tier limits (1000 RPD vs 20-50 for Flash)
+        // Alternative models if needed: 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'
+        const modelName = process.env.GEMINI_MODEL || 'gemini-2.5-flash-lite';
+        console.log(`🤖 Using model: ${modelName}`);
+        const model = genAI.getGenerativeModel({ model: modelName });
 
         const result = await model.generateContent([
             PAZUZU_PROMPT,
