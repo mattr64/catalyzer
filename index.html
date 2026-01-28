@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Catalyzer 🐱 | Pazuzu Detection System</title>
+    <script src="https://js.puter.com/v2/"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Creepster&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0a0908;
+            --bg-card: #1a1715;
+            --tortie-orange: #e85d04;
+            --tortie-gold: #f6aa1c;
+            --tortie-cream: #ffd6a0;
+            --calm-teal: #2ec4b6;
+            --calm-blue: #4cc9f0;
+            --text-primary: #fefae0;
+            --text-muted: #a8a095;
+            --danger-red: #d00000;
+            --glow-orange: rgba(232, 93, 4, 0.4);
+            --glow-teal: rgba(46, 196, 182, 0.4);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Instrument Sans', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated background */
+        .bg-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(ellipse at 20% 80%, rgba(232, 93, 4, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(246, 170, 28, 0.06) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(232, 93, 4, 0.03) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .grain-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23noise)'/%3E%3C/svg%3E");
+            opacity: 0.03;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .container {
+            position: relative;
+            z-index: 2;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .logo {
+            font-family: 'Creepster', cursive;
+            font-size: clamp(3rem, 12vw, 4.5rem);
+            letter-spacing: 0.05em;
+            background: linear-gradient(135deg, var(--tortie-orange) 0%, var(--tortie-gold) 50%, var(--tortie-cream) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 0 30px var(--glow-orange));
+            animation: flicker 3s ease-in-out infinite;
+        }
+
+        @keyframes flicker {
+            0%, 100% { filter: drop-shadow(0 0 30px var(--glow-orange)); }
+            50% { filter: drop-shadow(0 0 40px var(--glow-orange)) drop-shadow(0 0 60px rgba(232, 93, 4, 0.2)); }
+        }
+
+        .tagline {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+        }
+
+        .dill-intro {
+            font-size: 0.85rem;
+            color: var(--tortie-gold);
+            margin-top: 1rem;
+            font-style: italic;
+        }
+
+        /* Upload Area */
+        .upload-zone {
+            background: var(--bg-card);
+            border: 2px dashed var(--text-muted);
+            border-radius: 1rem;
+            padding: 3rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .upload-zone::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, var(--tortie-orange), var(--tortie-gold));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .upload-zone:hover {
+            border-color: var(--tortie-orange);
+            transform: translateY(-2px);
+        }
+
+        .upload-zone:hover::before {
+            opacity: 0.05;
+        }
+
+        .upload-zone.drag-over {
+            border-color: var(--tortie-gold);
+            background: rgba(246, 170, 28, 0.1);
+        }
+
+        .upload-zone.has-image {
+            padding: 1rem;
+            border-style: solid;
+            border-color: var(--tortie-orange);
+        }
+
+        .upload-icon {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .upload-text {
+            position: relative;
+            z-index: 1;
+        }
+
+        .upload-text h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .upload-text p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        /* Preview */
+        .preview-container {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .upload-zone.has-image .preview-container {
+            display: flex;
+        }
+
+        .upload-zone.has-image .upload-text {
+            display: none;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 0.5rem;
+            object-fit: contain;
+        }
+
+        .change-photo {
+            font-size: 0.85rem;
+            color: var(--tortie-gold);
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        /* Analyze Button */
+        .analyze-btn {
+            width: 100%;
+            padding: 1.25rem 2rem;
+            margin-top: 1.5rem;
+            font-family: 'Creepster', cursive;
+            font-size: 1.5rem;
+            letter-spacing: 0.1em;
+            color: var(--bg-dark);
+            background: linear-gradient(135deg, var(--tortie-orange) 0%, var(--tortie-gold) 100%);
+            border: none;
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px var(--glow-orange);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .analyze-btn::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                45deg,
+                transparent 30%,
+                rgba(255, 255, 255, 0.2) 50%,
+                transparent 70%
+            );
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
+        }
+
+        .analyze-btn:hover::after {
+            transform: translateX(100%);
+        }
+
+        .analyze-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 30px var(--glow-orange);
+        }
+
+        .analyze-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .analyze-btn:disabled:hover::after {
+            transform: translateX(-100%);
+        }
+
+        /* Loading State */
+        .loading-state {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            padding: 3rem;
+            text-align: center;
+        }
+
+        .loading-state.active {
+            display: flex;
+        }
+
+        .cat-loader {
+            font-size: 4rem;
+            animation: bounce 0.6s ease-in-out infinite alternate;
+        }
+
+        @keyframes bounce {
+            from { transform: translateY(0) scale(1); }
+            to { transform: translateY(-15px) scale(1.1); }
+        }
+
+        .loading-text {
+            margin-top: 1.5rem;
+            font-size: 1.1rem;
+            color: var(--tortie-gold);
+        }
+
+        .loading-subtext {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        /* Results */
+        .results-container {
+            display: none;
+            margin-top: 2rem;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        .results-container.active {
+            display: block;
+        }
+
+        @keyframes slideUp {
+            from { 
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-card {
+            background: var(--bg-card);
+            border-radius: 1rem;
+            padding: 2rem;
+            border: 2px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .result-card.pazuzu {
+            border-color: var(--danger-red);
+            box-shadow: 0 0 40px rgba(208, 0, 0, 0.3);
+        }
+
+        .result-card.calm {
+            border-color: var(--calm-teal);
+            box-shadow: 0 0 40px var(--glow-teal);
+        }
+
+        .result-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+        }
+
+        .result-card.pazuzu::before {
+            background: linear-gradient(90deg, var(--danger-red), var(--tortie-orange));
+        }
+
+        .result-card.calm::before {
+            background: linear-gradient(90deg, var(--calm-teal), var(--calm-blue));
+        }
+
+        .verdict {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .verdict-icon {
+            font-size: 4rem;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .verdict-text {
+            font-family: 'Creepster', cursive;
+            font-size: 2.5rem;
+            letter-spacing: 0.05em;
+        }
+
+        .result-card.pazuzu .verdict-text {
+            color: var(--danger-red);
+            text-shadow: 0 0 30px rgba(208, 0, 0, 0.5);
+        }
+
+        .result-card.calm .verdict-text {
+            color: var(--calm-teal);
+            text-shadow: 0 0 30px var(--glow-teal);
+        }
+
+        /* Threat Meter */
+        .threat-meter {
+            margin: 1.5rem 0;
+        }
+
+        .meter-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .meter-bar {
+            height: 12px;
+            background: var(--bg-dark);
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .meter-fill {
+            height: 100%;
+            border-radius: 6px;
+            transition: width 1s ease-out;
+            position: relative;
+        }
+
+        .result-card.pazuzu .meter-fill {
+            background: linear-gradient(90deg, var(--tortie-gold), var(--tortie-orange), var(--danger-red));
+        }
+
+        .result-card.calm .meter-fill {
+            background: linear-gradient(90deg, var(--calm-blue), var(--calm-teal));
+        }
+
+        .meter-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .threat-level {
+            text-align: center;
+            margin-top: 0.75rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        /* Analysis Details */
+        .analysis-details {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .analysis-title {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            margin-bottom: 1rem;
+        }
+
+        .observations {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .observation {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .observation-icon {
+            flex-shrink: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+        }
+
+        /* Warning Message */
+        .pazuzu-warning {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: rgba(208, 0, 0, 0.15);
+            border-radius: 0.5rem;
+            border-left: 3px solid var(--danger-red);
+            font-size: 0.9rem;
+            color: var(--tortie-cream);
+        }
+
+        .calm-message {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background: rgba(46, 196, 182, 0.15);
+            border-radius: 0.5rem;
+            border-left: 3px solid var(--calm-teal);
+            font-size: 0.9rem;
+            color: var(--tortie-cream);
+        }
+
+        /* Try Again Button */
+        .try-again-btn {
+            width: 100%;
+            padding: 1rem;
+            margin-top: 1.5rem;
+            font-family: 'Instrument Sans', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            background: transparent;
+            border: 2px solid var(--text-muted);
+            border-radius: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .try-again-btn:hover {
+            border-color: var(--tortie-gold);
+            color: var(--tortie-gold);
+        }
+
+        /* Footer */
+        footer {
+            margin-top: auto;
+            padding-top: 3rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        footer a {
+            color: var(--tortie-gold);
+            text-decoration: none;
+        }
+
+        /* Error State */
+        .error-message {
+            background: rgba(208, 0, 0, 0.2);
+            border: 1px solid var(--danger-red);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-top: 1rem;
+            text-align: center;
+            color: var(--tortie-cream);
+            display: none;
+        }
+
+        .error-message.active {
+            display: block;
+            animation: shake 0.5s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        /* Not a cat state */
+        .not-a-cat {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .not-a-cat-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .not-a-cat h3 {
+            font-family: 'Creepster', cursive;
+            font-size: 1.8rem;
+            color: var(--tortie-gold);
+            margin-bottom: 0.5rem;
+        }
+
+        .not-a-cat p {
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-pattern"></div>
+    <div class="grain-overlay"></div>
+    
+    <div class="container">
+        <header>
+            <h1 class="logo">The Catalyzer</h1>
+            <p class="tagline">Pazuzu Detection System v1.0</p>
+            <p class="dill-intro">Featuring Dill, the Tortoiseshell Terror 🐱</p>
+        </header>
+
+        <main>
+            <div class="upload-zone" id="upload-zone">
+                <div class="upload-text">
+                    <span class="upload-icon">📸</span>
+                    <h3>Upload a Cat Photo</h3>
+                    <p>Drop an image here or tap to select</p>
+                </div>
+                <div class="preview-container">
+                    <img class="preview-image" id="preview-image" alt="Cat preview">
+                    <span class="change-photo">Tap to change photo</span>
+                </div>
+                <input type="file" id="file-input" accept="image/*">
+            </div>
+
+            <div class="error-message" id="error-message"></div>
+
+            <button class="analyze-btn" id="analyze-btn" disabled>
+                🔮 Analyze The Void
+            </button>
+
+            <div class="loading-state" id="loading-state">
+                <span class="cat-loader">🐱</span>
+                <p class="loading-text">Scanning for Pazuzu energy...</p>
+                <p class="loading-subtext" id="loading-subtext">Analyzing ear positioning...</p>
+            </div>
+
+            <div class="results-container" id="results-container">
+                <div class="result-card" id="result-card">
+                    <div class="verdict">
+                        <span class="verdict-icon" id="verdict-icon">😈</span>
+                        <h2 class="verdict-text" id="verdict-text">PAZUZU DETECTED</h2>
+                    </div>
+
+                    <div class="threat-meter">
+                        <div class="meter-label">
+                            <span>Calm</span>
+                            <span>Chaos</span>
+                        </div>
+                        <div class="meter-bar">
+                            <div class="meter-fill" id="meter-fill" style="width: 0%"></div>
+                        </div>
+                        <p class="threat-level" id="threat-level">Threat Level: MAXIMUM</p>
+                    </div>
+
+                    <div class="analysis-details">
+                        <h4 class="analysis-title">🔍 Behavioral Analysis</h4>
+                        <div class="observations" id="observations"></div>
+                    </div>
+
+                    <div class="pazuzu-warning" id="pazuzu-warning">
+                        ⚠️ <strong>Warning:</strong> This cat is currently plotting something. 
+                        Approach with caution and consider offering treats as a peace offering.
+                    </div>
+
+                    <div class="calm-message" id="calm-message">
+                        ✨ <strong>All clear!</strong> This cat is in a peaceful state. 
+                        Perfect time for gentle pets and cozy vibes.
+                    </div>
+                </div>
+
+                <button class="try-again-btn" id="try-again-btn">
+                    Analyze Another Cat 🐱
+                </button>
+            </div>
+        </main>
+
+        <footer>
+            <p>Made with 🧡 for Dill the Tortie</p>
+            <p style="margin-top: 0.5rem;">Powered by <a href="https://puter.com" target="_blank">Puter.js</a> + Gemini</p>
+        </footer>
+    </div>
+
+    <script>
+        // DOM Elements
+        const uploadZone = document.getElementById('upload-zone');
+        const fileInput = document.getElementById('file-input');
+        const previewImage = document.getElementById('preview-image');
+        const analyzeBtn = document.getElementById('analyze-btn');
+        const loadingState = document.getElementById('loading-state');
+        const loadingSubtext = document.getElementById('loading-subtext');
+        const resultsContainer = document.getElementById('results-container');
+        const resultCard = document.getElementById('result-card');
+        const verdictIcon = document.getElementById('verdict-icon');
+        const verdictText = document.getElementById('verdict-text');
+        const meterFill = document.getElementById('meter-fill');
+        const threatLevel = document.getElementById('threat-level');
+        const observations = document.getElementById('observations');
+        const pazuzuWarning = document.getElementById('pazuzu-warning');
+        const calmMessage = document.getElementById('calm-message');
+        const tryAgainBtn = document.getElementById('try-again-btn');
+        const errorMessage = document.getElementById('error-message');
+
+        let currentImageBase64 = null;
+
+        // Loading messages
+        const loadingMessages = [
+            "Analyzing ear positioning...",
+            "Measuring pupil dilation...",
+            "Detecting murder mittens...",
+            "Scanning for chaotic energy...",
+            "Evaluating tail threat level...",
+            "Checking for airplane ears...",
+            "Assessing pounce readiness...",
+            "Reading the void in their eyes..."
+        ];
+
+        // The Pazuzu Detection Prompt
+        const PAZUZU_PROMPT = `You are an expert cat behavior analyst specializing in detecting "Pazuzu mode" - the state when a cat is in attack/chaos/crazy mode, ready to pounce or cause mischief.
+
+Analyze this cat photo and determine if the cat is in PAZUZU MODE (chaotic/attack ready) or CALM MODE (relaxed/peaceful).
+
+Look for these PAZUZU indicators:
+- Direct, intense "lock-on" stare (targeting, not just looking)
+- Dilated pupils (especially in normal lighting)
+- Forward-focused, tense ears ("alert triangle" position)
+- Body weight shifted forward, coiled posture
+- Paws positioned together, ready to launch
+- Tense brow/forehead (micro-furrowing above eyes)
+- Tail up and alert, possibly twitching
+- Overall stillness that feels like "predator patience"
+- The unmistakable "I'm about to cause chaos" energy
+
+Look for these CALM indicators:
+- Soft, relaxed eyes (possibly slow-blink ready)
+- Normal pupils for the lighting
+- Ears relaxed, possibly slightly outward
+- Body melted/draped, loose posture
+- Paws casually placed, not positioned
+- Smooth, relaxed brow
+- Tail down or loosely curled
+- Overall "observing" rather than "hunting" vibe
+
+IMPORTANT: If this image does not contain a cat, respond with exactly:
+{"is_cat": false}
+
+If this IS a cat, respond with this exact JSON format:
+{
+    "is_cat": true,
+    "is_pazuzu": true/false,
+    "confidence": 0-100,
+    "threat_level": "MINIMAL" | "LOW" | "MODERATE" | "HIGH" | "MAXIMUM" | "RUN",
+    "observations": [
+        "observation about eyes",
+        "observation about ears", 
+        "observation about body posture",
+        "observation about overall vibe"
+    ],
+    "summary": "A brief, fun one-liner about the cat's current state"
+}
+
+Be playful and fun with your observations! This is for entertainment.
+Respond ONLY with the JSON, no other text.`;
+
+        // Resize image to reasonable dimensions
+        function resizeImage(file, maxSize = 1024) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let { width, height } = img;
+
+                        // Calculate new dimensions
+                        if (width > height && width > maxSize) {
+                            height = (height * maxSize) / width;
+                            width = maxSize;
+                        } else if (height > maxSize) {
+                            width = (width * maxSize) / height;
+                            height = maxSize;
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        // Get base64 (JPEG for smaller size)
+                        const base64 = canvas.toDataURL('image/jpeg', 0.85);
+                        resolve(base64);
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Handle file selection
+        async function handleFileSelect(file) {
+            if (!file || !file.type.startsWith('image/')) {
+                showError('Please select an image file');
+                return;
+            }
+
+            hideError();
+            resultsContainer.classList.remove('active');
+
+            // Resize and store
+            currentImageBase64 = await resizeImage(file);
+            
+            // Show preview
+            previewImage.src = currentImageBase64;
+            uploadZone.classList.add('has-image');
+            analyzeBtn.disabled = false;
+        }
+
+        // Upload zone events
+        uploadZone.addEventListener('click', () => fileInput.click());
+        
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files[0]) {
+                handleFileSelect(e.target.files[0]);
+            }
+        });
+
+        // Drag and drop
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('drag-over');
+        });
+
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('drag-over');
+        });
+
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('drag-over');
+            if (e.dataTransfer.files[0]) {
+                handleFileSelect(e.dataTransfer.files[0]);
+            }
+        });
+
+        // Loading animation
+        let loadingInterval;
+        function startLoadingAnimation() {
+            let index = 0;
+            loadingSubtext.textContent = loadingMessages[0];
+            loadingInterval = setInterval(() => {
+                index = (index + 1) % loadingMessages.length;
+                loadingSubtext.textContent = loadingMessages[index];
+            }, 1500);
+        }
+
+        function stopLoadingAnimation() {
+            clearInterval(loadingInterval);
+        }
+
+        // Analyze the cat!
+        analyzeBtn.addEventListener('click', async () => {
+            if (!currentImageBase64) return;
+
+            // Show loading
+            analyzeBtn.style.display = 'none';
+            uploadZone.style.display = 'none';
+            loadingState.classList.add('active');
+            resultsContainer.classList.remove('active');
+            hideError();
+            startLoadingAnimation();
+
+            try {
+                const response = await puter.ai.chat(
+                    PAZUZU_PROMPT,
+                    currentImageBase64,
+                    { model: 'gemini-2.5-flash' }
+                );
+
+                stopLoadingAnimation();
+                
+                // Parse response
+                let result;
+                try {
+                    // Extract JSON from response (handle markdown code blocks)
+                    let jsonStr = response;
+                    if (typeof response === 'object' && response.message) {
+                        jsonStr = response.message.content || response.message;
+                    }
+                    
+                    // Clean up potential markdown
+                    jsonStr = String(jsonStr).replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+                    result = JSON.parse(jsonStr);
+                } catch (parseError) {
+                    console.error('Parse error:', parseError, 'Response:', response);
+                    throw new Error('Could not understand the analysis results');
+                }
+
+                displayResults(result);
+
+            } catch (error) {
+                console.error('Analysis error:', error);
+                stopLoadingAnimation();
+                showError('Analysis failed: ' + error.message);
+                resetUI();
+            }
+        });
+
+        // Display results
+        function displayResults(result) {
+            loadingState.classList.remove('active');
+            
+            // Check if it's a cat
+            if (!result.is_cat) {
+                resultsContainer.innerHTML = `
+                    <div class="result-card">
+                        <div class="not-a-cat">
+                            <span class="not-a-cat-icon">🤔</span>
+                            <h3>That's Not a Cat!</h3>
+                            <p>The Catalyzer only works on cats. Please upload a photo of a feline friend!</p>
+                        </div>
+                    </div>
+                    <button class="try-again-btn" onclick="resetUI()">
+                        Try Again 🐱
+                    </button>
+                `;
+                resultsContainer.classList.add('active');
+                return;
+            }
+
+            // Set up result card
+            const isPazuzu = result.is_pazuzu;
+            resultCard.className = 'result-card ' + (isPazuzu ? 'pazuzu' : 'calm');
+
+            // Verdict
+            verdictIcon.textContent = isPazuzu ? '😈' : '😺';
+            verdictText.textContent = isPazuzu ? 'PAZUZU DETECTED' : 'CALM KITTY';
+
+            // Threat meter
+            const confidence = result.confidence || 50;
+            setTimeout(() => {
+                meterFill.style.width = confidence + '%';
+            }, 100);
+
+            // Threat level text
+            const threatLabels = {
+                'MINIMAL': '😴 Threat Level: MINIMAL',
+                'LOW': '😌 Threat Level: LOW',
+                'MODERATE': '🤨 Threat Level: MODERATE',
+                'HIGH': '😼 Threat Level: HIGH',
+                'MAXIMUM': '🙀 Threat Level: MAXIMUM',
+                'RUN': '💀 Threat Level: RUN'
+            };
+            threatLevel.textContent = threatLabels[result.threat_level] || `Threat Level: ${result.threat_level}`;
+
+            // Observations
+            observations.innerHTML = '';
+            const icons = ['👁️', '👂', '🐱', '✨'];
+            (result.observations || []).forEach((obs, i) => {
+                const div = document.createElement('div');
+                div.className = 'observation';
+                div.innerHTML = `
+                    <span class="observation-icon">${icons[i % icons.length]}</span>
+                    <span>${obs}</span>
+                `;
+                observations.appendChild(div);
+            });
+
+            // Show/hide warnings
+            pazuzuWarning.style.display = isPazuzu ? 'block' : 'none';
+            calmMessage.style.display = isPazuzu ? 'none' : 'block';
+
+            // Update warning/message with summary if available
+            if (result.summary) {
+                if (isPazuzu) {
+                    pazuzuWarning.innerHTML = `⚠️ <strong>Analysis:</strong> ${result.summary}`;
+                } else {
+                    calmMessage.innerHTML = `✨ <strong>Analysis:</strong> ${result.summary}`;
+                }
+            }
+
+            resultsContainer.classList.add('active');
+        }
+
+        // Reset UI
+        function resetUI() {
+            analyzeBtn.style.display = 'block';
+            uploadZone.style.display = 'block';
+            loadingState.classList.remove('active');
+            resultsContainer.classList.remove('active');
+            
+            // Reset upload zone
+            uploadZone.classList.remove('has-image');
+            currentImageBase64 = null;
+            analyzeBtn.disabled = true;
+            fileInput.value = '';
+            
+            // Reset meter
+            meterFill.style.width = '0%';
+        }
+
+        // Try again button
+        tryAgainBtn.addEventListener('click', resetUI);
+
+        // Error handling
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.add('active');
+        }
+
+        function hideError() {
+            errorMessage.classList.remove('active');
+        }
+
+        // Make resetUI available globally for the dynamic button
+        window.resetUI = resetUI;
+    </script>
+</body>
+</html>
